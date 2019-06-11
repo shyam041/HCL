@@ -1,0 +1,21 @@
+[{ 
+    "id" : 5,
+    "name" : "Jemmy overy",
+    "country" : "india",
+    "Sector" : "japan",
+    "amount" :200
+},
+{ 
+    "id" : 6,
+    "name" : "John Smith",
+    "country" : "japan",
+    "Sector" : "bees",
+    "amount" :600
+},
+{ 
+    "id" : 60,
+    "name" : "putin",
+    "country" : "russia",
+    "Sector" : "rubel",
+    "amount" :600
+}]
