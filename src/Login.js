@@ -8,11 +8,9 @@ class Login extends React.Component {
         }
     }
     handleClick(event){
-        console.log(this.state.username)
         event.preventDefault();
         if(this.state.username==='shyam'&&this.state.password==='shyam'){
-            console.log('inside if')
-            localStorage.setItem("isLoggedIn",true);
+            localStorage.setItem("isLoggedIn",JSON.stringify(true));
             this.props.checkNewState(true)
         }     
     }

@@ -1,40 +1,61 @@
 import React from 'react';
 import Login from './Login';
 import LogOut from './Logout';
-import data from './data.json';
-
-let clonedData;
-
-if(!localStorage.getItem('data')){
-  console.log('first load');
-  localStorage.setItem('data',JSON.stringify(data));
-  clonedData = [...data];
-}else{
-  console.log('second load');
-  clonedData = JSON.parse(localStorage.getItem('data'));
-}
 
 class App extends React.Component{
-  state = {
-    vendors:clonedData.map((item)=>{
-        const clone = Object.assign({},item);
-        clone.isEditable = false;
-        return clone;
-      }),
-    isLoggedIn:localStorage.getItem('isLoggedIn'),
-  };
+  constructor(props){
+    console.log('Constructor');
+    super(props);
+    this.state = {
+      vendors:[],
+      masterVendorData:[],
+      isLoggedIn:JSON.parse(localStorage.getItem('isLoggedIn')),
+      country:'',
+      sector:'',
+      name:'',
+      amount:''
+    };
+  }
   
   checkNewState = (newState)=>{
     this.setState({isLoggedIn:newState})
   }
 
   logOut=()=>{
-    localStorage.removeItem('isLoggedIn');
-    this.setState({isLoggedIn:localStorage.getItem('isLoggedIn')})
+    localStorage.clear();
+    localStorage.removeItem('vendors');
+    this.setState({
+      isLoggedIn:localStorage.getItem('isLoggedIn'),
+      vendors:[],
+      masterVendorData:[]
+    })
+  }
+
+  addItem =(event)=>{
+    event.preventDefault();
+    const newItem = {
+      id: 1 + Math.random(),
+      name : this.state.name,
+      country : this.state.country,
+      Sector : this.state.sector,
+      amount :this.state.amount
+    };
+    const vendors = [...this.state.vendors];
+    const masterVendorData = [...this.state.masterVendorData];
+    vendors.push(newItem);
+    masterVendorData.push(newItem);
+    this.setState({
+      vendors,
+      masterVendorData,
+      name:'',
+      country:'',
+      sector:'',
+      amount:''
+    })
   }
 
   filterByValues =(event)=>{
-      const newArr = clonedData.filter((item)=>{
+      const newArr = this.state.masterVendorData.filter((item)=>{
         if((item.country.includes(event.target.value)||
             item.Sector.includes(event.target.value)||
             item.name.includes(event.target.value))){
@@ -43,8 +64,9 @@ class App extends React.Component{
     });
     this.setState({ vendors: newArr});    
   }
+
   handleEdit = (updateItem)=>{    
-    clonedData = this.state.vendors.map((item)=>{
+    const clonedData = this.state.vendors.map((item)=>{
       const clone = Object.assign({},item);
       if(clone.id===updateItem.id){
         clone.isEditable=true;
@@ -52,16 +74,45 @@ class App extends React.Component{
       }
       return clone;
     }); 
-    localStorage.setItem('data',JSON.stringify(clonedData));  
+    const clonedMasterData = this.state.masterVendorData.map((item)=>{
+      const clone = Object.assign({},item);
+      if(clone.id===updateItem.id){
+        clone.isEditable=true;
+        return clone;
+      }
+      return clone;
+    }); 
     this.setState(() => ({
-      vendors: clonedData
+      vendors: clonedData,
+      masterVendorData: clonedMasterData
     }));  
     
   }
 
+  hydrateStateWithLocalStorage(){
+    console.log('hydrateStateWithLocalStorage');
+    for(let key in this.state){      
+      if(localStorage.hasOwnProperty(key)){
+        let value =  localStorage.getItem(key);
+        try{
+          value = JSON.parse(value);
+          this.setState({ [key]: value });
+        }catch(e){
+          this.setState({ [key]: '' });
+        }
+      }
+    }
+  }
+
+  saveStateToLocalStorage = ()=>{
+    console.log('saveStateToLocalStorage');
+    for(let key in this.state){
+      localStorage.setItem(key,JSON.stringify(this.state[key]))
+    }
+  }
+
   saveData = (argItem)=>{
-    //clonedData = JSON.parse(localStorage.getItem('data'));
-    clonedData = clonedData.map((item)=>{
+    const clonedData = this.state.masterVendorData.map((item)=>{
       const clonedItem = Object.assign({},item);
       if(clonedItem.id==argItem.id){
         clonedItem.name = argItem.name;
@@ -69,15 +120,19 @@ class App extends React.Component{
         clonedItem.country = argItem.country;
         clonedItem.amount = argItem.amount;
         clonedItem.isEditable = false;
-        //console.log(clonedItem);
         return clonedItem;
       }      
       return clonedItem;
     });
-    localStorage.setItem('data',JSON.stringify(clonedData)); 
+    //localStorage.setItem('data',JSON.stringify(clonedData)); 
     this.setState(()=>({
-      vendors:clonedData
+      vendors:clonedData,
+      masterVendorData:clonedData
     }))
+  }
+
+  handleFormInputChange = (event,arg)=>{
+    this.setState({[arg]:event.target.value});
   }
   handleInputChange = (event,id,arg)=>{
     this.setState({vendors:this.state.vendors.map((item)=>{
@@ -88,8 +143,40 @@ class App extends React.Component{
         return item;
     })})
   } 
+  renderAddForm = ()=>{
+    return(
+        <form onSubmit={this.addItem}>
+            <br/>
+            <label>Add Form</label><br/>
+            <label>Name</label>
+            <input 
+              type="text" 
+              name="name" 
+              value={this.state.name} 
+              onChange={(e)=>{this.handleFormInputChange(e,'name')}}/><br/>
+            <label>Country</label>
+            <input 
+              type="text" 
+              name="country" 
+              value={this.state.country} 
+              onChange={(e)=>{this.handleFormInputChange(e,'country')}}/><br/>
+            <label>Sector</label>
+            <input 
+              type="text" 
+              name="sector" 
+              value={this.state.sector} 
+              onChange={(e)=>{this.handleFormInputChange(e,'sector')}}/><br/>
+            <label>Amount</label>
+            <input 
+              type="text" 
+              name="amount" 
+              value={this.state.amount} 
+              onChange={(e)=>{this.handleFormInputChange(e,'amount')}}/><br/>
+            <button>Add</button>
+        </form>);
+  }
   render(){
-      console.log(this.state.vendors)
+      console.log('render');
       const hideInput = {display:'none'};
       if(this.state.isLoggedIn){
         let toRender = this.state.vendors.map((item)=>{
@@ -150,10 +237,31 @@ class App extends React.Component{
             </tbody>
           </table>
           <input type="text" id="filterData" onChange={this.filterByValues}/>
+          {this.renderAddForm()}
           <LogOut logOut={this.logOut}/>
         </React.Fragment>)        
       }      
       return (<Login checkNewState={this.checkNewState}/>);
+  }
+
+  componentDidMount() {   
+    console.log('componentDidMount');
+    this.hydrateStateWithLocalStorage();
+    // add event listener to save state to localStorage
+    // when user leaves/refreshes the page
+    window.addEventListener(
+      "beforeunload",
+      this.saveStateToLocalStorage.bind(this)
+    );
+  }
+
+  componentWillUnmount() {
+    // window.removeEventListener(
+    //   "beforeunload",
+    //   //this.saveStateToLocalStorage.bind(this)
+    // );
+    // // saves if component has a chance to unmount
+    // this.saveStateToLocalStorage();
   }
 }
 
